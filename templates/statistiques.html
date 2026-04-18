@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block page_title %}Statistiques Descriptives{% endblock %}
+{% block content %}
+
+<!-- KPI CARDS -->
+<div class="stats-grid fade-up">
+  <div class="stat-card teal">
+    <div class="stat-icon"><i class="fa fa-users"></i></div>
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-label">Total patients enregistrés</div>
+  </div>
+  {% for s, v in statuts.items() %}
+  <div class="stat-card {% if s=='Sorti' %}green{% elif s=='Hospitalisé' %}yellow{% elif s=='Urgence' %}red{% else %}teal{% endif %}">
+    <div class="stat-icon">
+      <i class="fa {% if s=='Sorti' %}fa-door-open{% elif s=='Hospitalisé' %}fa-bed{% elif s=='Urgence' %}fa-bolt{% else %}fa-stethoscope{% endif %}"></i>
+    </div>
+    <div class="stat-value">{{ v }}</div>
+    <div class="stat-label">{{ s }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ROW 1 : Barres services + Camembert sexe -->
+<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-bottom:20px;">
+  <div class="card fade-up delay-1">
+    <div class="card-header">
+      <span class="card-title"><i class="fa fa-chart-bar text-teal"></i> &nbsp;Patients par service</span>
+    </div>
+    <div style="position:relative;height:300px;">
+      <canvas id="chartServices"></canvas>
+    </div>
+  </div>
+  <div class="card fade-up delay-1">
+    <div class="card-header">
+      <span class="card-title"><i class="fa fa-chart-pie text-teal"></i> &nbsp;Répartition par sexe</span>
+    </div>
+    <div style="position:relative;height:300px;">
+      <canvas id="chartSexe"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2 : Courbe admissions + Camembert statuts -->
+<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:20px;margin-bottom:20px;">
+  <div class="card fade-up delay-2">
+    <div class="card-header">
+      <span class="card-title"><i class="fa fa-chart-line text-teal"></i> &nbsp;Évolution des admissions</span>
+    </div>
+    <div style="position:relative;height:260px;">
+      <canvas id="chartAdmissions"></canvas>
+    </div>
+  </div>
+  <div class="card fade-up delay-2">
+    <div class="card-header">
+      <span class="card-title"><i class="fa fa-chart-pie text-teal"></i> &nbsp;Statuts des patients</span>
+    </div>
+    <div style="position:relative;height:260px;">
+      <canvas id="chartStatuts"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 3 : Groupes sanguins + Derniers patients -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card fade-up delay-3">
+    <div class="card-header">
+      <span class="card-title"><i class="fa fa-tint text-teal"></i> &nbsp;Groupes sanguins</span>
+    </div>
+    <div style="position:relative;height:220px;">
+      <canvas id="chartGroupes"></canvas>
+    </div>
+  </div>
+  <div class="card fade-up delay-3">
+    <div class="card-header">
+      <span class="card-title"><i class="fa fa-clock text-teal"></i> &nbsp;5 derniers patients admis</span>
+    </div>
+    {% for p in patients[-5:]|reverse %}
+    <a href="{{ url_for('fiche_patient', pid=p.id_patient) }}" style="text-decoration:none;">
+      <div class="flex items-center gap-2" style="padding:10px 0;border-bottom:1px solid var(--border);">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#00e5d4);
+                    display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--navy);font-size:0.8rem;flex-shrink:0;">
+          {{ p.prenom[0] }}{{ p.nom[0] }}
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:0.85rem;font-weight:600;">{{ p.nom }} {{ p.prenom }}</div>
+          <div class="text-muted" style="font-size:0.72rem;">{{ p.service }} · {{ p.date_entree }}</div>
+        </div>
+        {% if p.statut == 'Hospitalisé' %}<span class="badge badge-yellow" style="font-size:0.65rem;">{{ p.statut }}</span>
+        {% elif p.statut == 'Urgence' %}<span class="badge badge-red" style="font-size:0.65rem;">{{ p.statut }}</span>
+        {% elif p.statut == 'Sorti' %}<span class="badge badge-green" style="font-size:0.65rem;">{{ p.statut }}</span>
+        {% else %}<span class="badge badge-teal" style="font-size:0.65rem;">{{ p.statut }}</span>{% endif %}
+      </div>
+    </a>
+    {% else %}
+      <div style="padding:30px;text-align:center;"><p class="text-muted">Aucun patient enregistré.</p></div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  const dataServices = {{ services | tojson }};
+  const dataSexes    = {{ sexes    | tojson }};
+  const dataStatuts  = {{ statuts  | tojson }};
+  const dataGroupes  = {{ groupes  | tojson }};
+  const dataPatients = {{ patients | tojson }};
+</script>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const TEAL='#00c6b3',YELLOW='#ffd93d',RED='#ff6b6b',GREEN='#6bcb77',
+      BLUE='#6bbcff',PURPLE='#c77dff',PINK='#ff9fcf',ORANGE='#ffaa5a';
+const PALETTE=[TEAL,YELLOW,RED,GREEN,BLUE,PURPLE,PINK,ORANGE,'#a0c4ff','#caffbf','#ffadad','#ffd6a5'];
+const grid='rgba(255,255,255,0.05)';
+const tip={backgroundColor:'#0f2044',borderColor:'rgba(0,198,179,0.3)',borderWidth:1,
+           titleColor:'#f0f4ff',bodyColor:'#7a8fb5',padding:12,cornerRadius:8};
+Chart.defaults.color='#7a8fb5';
+Chart.defaults.font.family="'Sora',sans-serif";
+
+// 1. Barres — Services
+(function(){
+  const L=Object.keys(dataServices), V=Object.values(dataServices);
+  if(!L.length) return;
+  new Chart(document.getElementById('chartServices'),{
+    type:'bar',
+    data:{labels:L,datasets:[{label:'Patients',data:V,
+      backgroundColor:L.map((_,i)=>PALETTE[i%PALETTE.length]+'99'),
+      borderColor:L.map((_,i)=>PALETTE[i%PALETTE.length]),
+      borderWidth:1.5,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      animation:{duration:900,easing:'easeOutQuart'},
+      plugins:{legend:{display:false},tooltip:tip},
+      scales:{x:{grid:{color:grid},ticks:{maxRotation:35,minRotation:25}},
+              y:{grid:{color:grid},beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+})();
+
+// 2. Doughnut — Sexe
+(function(){
+  const L=Object.keys(dataSexes),V=Object.values(dataSexes);
+  if(!V.some(v=>v>0)) return;
+  new Chart(document.getElementById('chartSexe'),{
+    type:'doughnut',
+    data:{labels:L,datasets:[{data:V,
+      backgroundColor:[BLUE+'cc',PINK+'cc'],borderColor:[BLUE,PINK],
+      borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      animation:{animateRotate:true,duration:900},cutout:'62%',
+      plugins:{legend:{position:'bottom',labels:{padding:16,usePointStyle:true,pointStyleWidth:10}},
+               tooltip:tip}}
+  });
+})();
+
+// 3. Ligne — Admissions par jour + cumulé
+(function(){
+  if(!dataPatients.length) return;
+  const counts={};
+  dataPatients.forEach(p=>{
+    const d=(p.date_entree||'').slice(0,10);
+    if(d) counts[d]=(counts[d]||0)+1;
+  });
+  const sorted=Object.keys(counts).sort();
+  const vals=sorted.map(d=>counts[d]);
+  const cumul=[];
+  vals.reduce((acc,v,i)=>{cumul[i]=acc+v;return cumul[i];},0);
+  new Chart(document.getElementById('chartAdmissions'),{
+    type:'line',
+    data:{labels:sorted,datasets:[
+      {label:'Admissions / jour',data:vals,borderColor:TEAL,backgroundColor:TEAL+'22',
+       borderWidth:2.5,pointBackgroundColor:TEAL,pointRadius:5,pointHoverRadius:7,
+       tension:0.4,fill:true},
+      {label:'Total cumulé',data:cumul,borderColor:YELLOW,backgroundColor:'transparent',
+       borderWidth:2,borderDash:[6,4],pointBackgroundColor:YELLOW,pointRadius:4,
+       tension:0.4,fill:false,yAxisID:'y2'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:1000},
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'top',labels:{usePointStyle:true,pointStyleWidth:10,padding:16}},tooltip:tip},
+      scales:{
+        x:{grid:{color:grid}},
+        y:{grid:{color:grid},beginAtZero:true,title:{display:true,text:'Par jour',color:TEAL}},
+        y2:{position:'right',beginAtZero:true,grid:{drawOnChartArea:false},
+            title:{display:true,text:'Cumulé',color:YELLOW}}
+      }}
+  });
+})();
+
+// 4. Pie — Statuts
+(function(){
+  const L=Object.keys(dataStatuts),V=Object.values(dataStatuts);
+  if(!L.length) return;
+  const cm={'Hospitalisé':YELLOW,'En consultation':TEAL,'Sorti':GREEN,'Urgence':RED};
+  new Chart(document.getElementById('chartStatuts'),{
+    type:'pie',
+    data:{labels:L,datasets:[{data:V,
+      backgroundColor:L.map(l=>(cm[l]||BLUE)+'bb'),
+      borderColor:L.map(l=>cm[l]||BLUE),borderWidth:2,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      animation:{animateRotate:true,duration:900},
+      plugins:{legend:{position:'bottom',labels:{padding:14,usePointStyle:true,pointStyleWidth:10}},
+               tooltip:tip}}
+  });
+})();
+
+// 5. Barres — Groupes sanguins
+(function(){
+  const L=Object.keys(dataGroupes),V=Object.values(dataGroupes);
+  if(!L.length) return;
+  new Chart(document.getElementById('chartGroupes'),{
+    type:'bar',
+    data:{labels:L,datasets:[{label:'Patients',data:V,
+      backgroundColor:RED+'88',borderColor:RED,borderWidth:1.5,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:800},
+      plugins:{legend:{display:false},tooltip:tip},
+      scales:{x:{grid:{color:grid}},y:{grid:{color:grid},beginAtZero:true,ticks:{stepSize:1}}}}
+  });
+})();
+</script>
+{% endblock %}

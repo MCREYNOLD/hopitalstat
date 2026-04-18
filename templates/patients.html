@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block page_title %}Liste des Patients{% endblock %}
+{% block content %}
+
+<div class="search-bar fade-up">
+  <div class="search-input-wrap">
+    <i class="fa fa-search"></i>
+    <input type="text" id="searchInput" placeholder="Rechercher par nom, prénom ou ID patient..."
+           value="{{ query }}" oninput="filterPatients()">
+  </div>
+  <select id="filterService" onchange="filterPatients()" style="width:200px;">
+    <option value="">Tous les services</option>
+    {% for s in ['Urgences','Chirurgie','Médecine générale','Neurologie','Cardiologie',
+                 'Pédiatrie','Maternité','Orthopédie','Ophtalmologie','Pneumologie',
+                 'Gastro-entérologie','Dermatologie','ORL','Urologie','Gynécologie',
+                 'Psychiatrie','Oncologie','Rhumatologie','Endocrinologie','Radiologie',
+                 'Biologie','Réanimation','Soins intensifs','Pharmacie'] %}
+    <option value="{{ s }}" {% if service==s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <select id="filterStatut" onchange="filterPatients()" style="width:180px;">
+    <option value="">Tous les statuts</option>
+    <option value="Hospitalisé" {% if statut=='Hospitalisé' %}selected{% endif %}>Hospitalisé</option>
+    <option value="En consultation" {% if statut=='En consultation' %}selected{% endif %}>En consultation</option>
+    <option value="Sorti" {% if statut=='Sorti' %}selected{% endif %}>Sorti</option>
+    <option value="Urgence" {% if statut=='Urgence' %}selected{% endif %}>Urgence</option>
+  </select>
+  <a href="{{ url_for('nouveau_patient') }}" class="btn btn-primary">
+    <i class="fa fa-plus"></i> Nouveau
+  </a>
+</div>
+
+<div class="card fade-up delay-1">
+  <div class="card-header">
+    <span class="card-title">
+      <i class="fa fa-users text-teal"></i> &nbsp;Patients enregistrés
+      <span class="badge badge-teal" style="margin-left:10px;" id="countBadge">{{ patients|length }}</span>
+    </span>
+  </div>
+
+  {% if patients %}
+  <div class="table-wrap">
+    <table id="patientsTable">
+      <thead>
+        <tr>
+          <th>ID Patient</th>
+          <th>Nom & Prénom</th>
+          <th>Sexe</th>
+          <th>Service</th>
+          <th>Salle</th>
+          <th>Statut</th>
+          <th>Urgence</th>
+          <th>Date d'entrée</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in patients %}
+        <tr class="patient-row"
+            data-nom="{{ p.nom }} {{ p.prenom }}"
+            data-id="{{ p.id_patient }}"
+            data-service="{{ p.service }}"
+            data-statut="{{ p.statut }}">
+          <td><span class="patient-id">{{ p.id_patient }}</span></td>
+          <td>
+            <div style="font-weight:600;">{{ p.nom }} {{ p.prenom }}</div>
+            <div class="text-muted">{{ p.date_naissance }}</div>
+          </td>
+          <td>
+            {% if p.sexe == 'Masculin' %}
+              <i class="fa fa-mars" style="color:#6bbcff;"></i> M
+            {% else %}
+              <i class="fa fa-venus" style="color:#ff9fcf;"></i> F
+            {% endif %}
+          </td>
+          <td><span class="badge badge-teal">{{ p.service }}</span></td>
+          <td><span class="mono" style="font-size:0.82rem;">{{ p.salle or '—' }}</span></td>
+          <td>
+            {% if p.statut == 'Hospitalisé' %}
+              <span class="badge badge-yellow">{{ p.statut }}</span>
+            {% elif p.statut == 'En consultation' %}
+              <span class="badge badge-teal">{{ p.statut }}</span>
+            {% elif p.statut == 'Sorti' %}
+              <span class="badge badge-green">{{ p.statut }}</span>
+            {% else %}
+              <span class="badge badge-red">{{ p.statut }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.urgence == 'Oui' %}
+              <span class="badge badge-red"><i class="fa fa-bolt"></i> OUI</span>
+            {% else %}
+              <span class="badge badge-muted">Non</span>
+            {% endif %}
+          </td>
+          <td class="mono" style="font-size:0.78rem;">{{ p.date_entree }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('fiche_patient', pid=p.id_patient) }}" class="btn btn-outline btn-sm">
+                <i class="fa fa-eye"></i>
+              </a>
+              <a href="{{ url_for('modifier_patient', pid=p.id_patient) }}" class="btn btn-sm" style="background:rgba(255,217,61,0.15);color:var(--accent2);border:1px solid rgba(255,217,61,0.3)">
+                <i class="fa fa-pen"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon"><i class="fa fa-user-slash"></i></div>
+    <p>Aucun patient trouvé.<br>
+    <a href="{{ url_for('nouveau_patient') }}" class="text-teal">Enregistrer le premier patient →</a></p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+function filterPatients() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const sv = document.getElementById('filterService').value;
+  const st = document.getElementById('filterStatut').value;
+  const rows = document.querySelectorAll('.patient-row');
+  let visible = 0;
+  rows.forEach(row => {
+    const nom = row.dataset.nom.toLowerCase();
+    const id = row.dataset.id.toLowerCase();
+    const service = row.dataset.service;
+    const statut = row.dataset.statut;
+    const matchQ = !q || nom.includes(q) || id.includes(q);
+    const matchS = !sv || service === sv;
+    const matchSt = !st || statut === st;
+    row.style.display = (matchQ && matchS && matchSt) ? '' : 'none';
+    if (matchQ && matchS && matchSt) visible++;
+  });
+  document.getElementById('countBadge').textContent = visible;
+}
+</script>
+{% endblock %}

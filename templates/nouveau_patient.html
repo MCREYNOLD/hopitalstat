@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block page_title %}Nouveau Patient{% endblock %}
+{% block content %}
+
+<div style="max-width:900px;">
+
+<div class="flex items-center gap-2 mb-6 fade-up">
+  <a href="{{ url_for('patients') }}" class="btn btn-outline btn-sm"><i class="fa fa-arrow-left"></i></a>
+  <div>
+    <h2 style="font-size:1.3rem;font-weight:700;">Enregistrement d'un nouveau patient</h2>
+    <p class="text-muted">Remplissez les informations du patient. Un ID unique sera généré automatiquement.</p>
+  </div>
+</div>
+
+<form method="POST">
+
+  <!-- IDENTITÉ -->
+  <div class="card fade-up delay-1 mb-4">
+    <div class="section-title"><i class="fa fa-id-card"></i> Identité du Patient</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nom de famille *</label>
+        <input type="text" name="nom" placeholder="Ex: MBARGA" required>
+      </div>
+      <div class="form-group">
+        <label>Prénom(s) *</label>
+        <input type="text" name="prenom" placeholder="Ex: Jean-Paul" required>
+      </div>
+      <div class="form-group">
+        <label>Date de naissance *</label>
+        <input type="date" name="date_naissance" required>
+      </div>
+      <div class="form-group">
+        <label>Groupe sanguin</label>
+        <select name="groupe_sanguin">
+          <option value="">— Sélectionner —</option>
+          <option>A+</option><option>A-</option>
+          <option>B+</option><option>B-</option>
+          <option>AB+</option><option>AB-</option>
+          <option>O+</option><option>O-</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Téléphone</label>
+        <input type="tel" name="telephone" placeholder="Ex: 6XX XXX XXX">
+      </div>
+      <div class="form-group">
+        <label>Adresse / Quartier</label>
+        <input type="text" name="adresse" placeholder="Ex: Bastos, Yaoundé">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:18px;">
+      <label>Sexe *</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="sexe" value="Masculin" required>
+          <i class="fa fa-mars" style="color:#6bbcff;"></i> Masculin
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="sexe" value="Féminin">
+          <i class="fa fa-venus" style="color:#ff9fcf;"></i> Féminin
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRISE EN CHARGE -->
+  <div class="card fade-up delay-2 mb-4">
+    <div class="section-title"><i class="fa fa-hospital"></i> Prise en Charge Médicale</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Service / Spécialité *</label>
+        <select name="service" required>
+          <option value="">— Choisir le service —</option>
+          {% for s in ['Urgences','Médecine générale','Chirurgie générale','Chirurgie cardiaque',
+                       'Chirurgie orthopédique','Neurologie','Neurochirurgie','Cardiologie',
+                       'Pédiatrie','Néonatologie','Maternité','Gynécologie','Orthopédie',
+                       'Ophtalmologie','ORL','Pneumologie','Gastro-entérologie','Hépatologie',
+                       'Dermatologie','Urologie','Néphrologie','Endocrinologie','Diabétologie',
+                       'Psychiatrie','Oncologie','Hématologie','Rhumatologie','Infectiologie',
+                       'Médecine interne','Réanimation','Soins intensifs','Radiologie',
+                       'Biologie médicale','Anesthésiologie','Pharmacie','Kinésithérapie'] %}
+          <option>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Médecin traitant</label>
+        <input type="text" name="medecin" placeholder="Ex: Dr. Fouda Marie">
+      </div>
+      <div class="form-group">
+        <label>N° de Salle / Lit</label>
+        <input type="text" name="salle" placeholder="Ex: SALLE-12 / LIT-03">
+      </div>
+      <div class="form-group">
+        <label>Statut d'admission</label>
+        <select name="statut">
+          <option value="En consultation">En consultation</option>
+          <option value="Hospitalisé">Hospitalisé</option>
+          <option value="Urgence">Urgence</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:18px;">
+      <label>Niveau d'urgence</label>
+      <div class="radio-group">
+        <label class="radio-option">
+          <input type="radio" name="urgence" value="Non" checked>
+          <i class="fa fa-circle" style="color:var(--accent3);font-size:0.6rem;"></i> Non urgent
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="urgence" value="Oui">
+          <i class="fa fa-bolt" style="color:var(--accent);"></i> URGENT
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOTIF & SYMPTÔMES -->
+  <div class="card fade-up delay-2 mb-4">
+    <div class="section-title"><i class="fa fa-notes-medical"></i> Motif & Symptômes</div>
+
+    <div class="form-group mb-4">
+      <label>Motif de consultation / Problème principal *</label>
+      <textarea name="motif" placeholder="Décrivez le problème principal du patient, les raisons de sa venue, ses plaintes principales..." required></textarea>
+    </div>
+
+    <div class="form-group mb-4">
+      <label>Symptômes observés (cocher ceux qui s'appliquent)</label>
+      <div class="checkbox-grid">
+        {% for s in ['Fièvre','Douleur thoracique','Essoufflement','Maux de tête','Nausées/Vomissements',
+                     'Diarrhée','Constipation','Douleurs abdominales','Perte de connaissance',
+                     'Convulsions','Paralysie','Troubles visuels','Saignements','Traumatisme',
+                     'Palpitations','Toux','Douleurs articulaires','Œdèmes','Éruption cutanée',
+                     'Perte de poids','Fatigue intense','Dysurie','Hématurie','Ictère'] %}
+        <label class="checkbox-option">
+          <input type="checkbox" name="symptomes" value="{{ s }}"> {{ s }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Antécédents médicaux</label>
+        <textarea name="antecedents" placeholder="Maladies chroniques, hospitalisations antérieures, chirurgies passées..." style="min-height:80px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Allergies connues</label>
+        <textarea name="allergies" placeholder="Médicaments, aliments, substances auxquels le patient est allergique..." style="min-height:80px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group fade-up delay-3">
+    <button type="submit" class="btn btn-primary">
+      <i class="fa fa-save"></i> Enregistrer le patient
+    </button>
+    <a href="{{ url_for('patients') }}" class="btn btn-outline">
+      <i class="fa fa-times"></i> Annuler
+    </a>
+  </div>
+
+</form>
+</div>
+{% endblock %}

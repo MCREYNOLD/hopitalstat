@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block page_title %}Tableau de Bord{% endblock %}
+{% block content %}
+
+<div class="stats-grid fade-up">
+  <div class="stat-card teal">
+    <div class="stat-icon"><i class="fa fa-users"></i></div>
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-label">Total patients enregistrés</div>
+  </div>
+  <div class="stat-card yellow">
+    <div class="stat-icon"><i class="fa fa-bed"></i></div>
+    <div class="stat-value">{{ hospitalises }}</div>
+    <div class="stat-label">Hospitalisés actuellement</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-icon"><i class="fa fa-stethoscope"></i></div>
+    <div class="stat-value">{{ consultations }}</div>
+    <div class="stat-label">En consultation</div>
+  </div>
+  <div class="stat-card red">
+    <div class="stat-icon"><i class="fa fa-bolt"></i></div>
+    <div class="stat-value">{{ urgences }}</div>
+    <div class="stat-label">Urgences du jour</div>
+  </div>
+  <div class="stat-card teal delay-1">
+    <div class="stat-icon"><i class="fa fa-door-open"></i></div>
+    <div class="stat-value">{{ sortis }}</div>
+    <div class="stat-label">Patients sortis</div>
+  </div>
+</div>
+
+<div class="flex gap-2 mb-6 fade-up delay-2">
+  <a href="{{ url_for('nouveau_patient') }}" class="btn btn-primary">
+    <i class="fa fa-user-plus"></i> Enregistrer un patient
+  </a>
+  <a href="{{ url_for('patients') }}" class="btn btn-outline">
+    <i class="fa fa-list"></i> Voir tous les patients
+  </a>
+  <a href="{{ url_for('statistiques') }}" class="btn btn-outline">
+    <i class="fa fa-chart-bar"></i> Statistiques
+  </a>
+</div>
+
+<div class="card fade-up delay-3">
+  <div class="card-header">
+    <span class="card-title"><i class="fa fa-clock text-teal"></i> &nbsp;Services disponibles</span>
+  </div>
+  <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap:12px;">
+    {% set services = [
+      ('fa-bolt','Urgences','red'),
+      ('fa-scalpel','Chirurgie','teal'),
+      ('fa-brain','Neurologie','yellow'),
+      ('fa-heart','Cardiologie','red'),
+      ('fa-child','Pédiatrie','green'),
+      ('fa-baby','Maternité','yellow'),
+      ('fa-bone','Orthopédie','teal'),
+      ('fa-eye','Ophtalmologie','teal'),
+      ('fa-lungs','Pneumologie','yellow'),
+      ('fa-microscope','Biologie','green'),
+      ('fa-x-ray','Radiologie','muted'),
+      ('fa-pills','Pharmacie','green'),
+    ] %}
+    {% for icon, name, color in services %}
+    <a href="{{ url_for('patients') }}?service={{ name }}" style="text-decoration:none;">
+      <div class="stat-card {{ color }}" style="padding:14px; cursor:pointer;">
+        <div class="stat-icon" style="font-size:1.1rem;margin-bottom:6px;"><i class="fa {{ icon }}"></i></div>
+        <div style="font-size:0.82rem;font-weight:600;">{{ name }}</div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block page_title %}Fiche Patient — {{ patient.nom }} {{ patient.prenom }}{% endblock %}
+{% block content %}
+
+<div class="flex items-center gap-2 mb-6 fade-up">
+  <a href="{{ url_for('patients') }}" class="btn btn-outline btn-sm"><i class="fa fa-arrow-left"></i></a>
+  <a href="{{ url_for('modifier_patient', pid=patient.id_patient) }}" class="btn btn-sm" style="background:rgba(255,217,61,0.15);color:var(--accent2);border:1px solid rgba(255,217,61,0.3)">
+    <i class="fa fa-pen"></i> Modifier / Ajouter diagnostic
+  </a>
+  <form method="POST" action="{{ url_for('supprimer_patient', pid=patient.id_patient) }}"
+      onsubmit="return confirm('Supprimer définitivement ce patient ?')">
+  <button type="submit" class="btn btn-danger btn-sm">
+    <i class="fa fa-trash"></i> Supprimer
+  </button>
+</form>
+</div>
+
+{% if patient.urgence == 'Oui' %}
+<div class="alert-box alert-urgence fade-up">
+  <i class="fa fa-bolt fa-lg"></i>
+  <strong>PATIENT EN URGENCE</strong> — Ce patient nécessite une prise en charge prioritaire immédiate.
+</div>
+{% endif %}
+
+<!-- HEADER FICHE -->
+<div class="fiche-header fade-up delay-1">
+  <div class="fiche-avatar">
+    {{ patient.prenom[0] }}{{ patient.nom[0] }}
+  </div>
+  <div class="fiche-info" style="flex:1;">
+    <div class="flex items-center gap-2">
+      <h2>{{ patient.nom }} {{ patient.prenom }}</h2>
+      {% if patient.statut == 'Hospitalisé' %}
+        <span class="badge badge-yellow">{{ patient.statut }}</span>
+      {% elif patient.statut == 'En consultation' %}
+        <span class="badge badge-teal">{{ patient.statut }}</span>
+      {% elif patient.statut == 'Sorti' %}
+        <span class="badge badge-green">{{ patient.statut }}</span>
+      {% else %}
+        <span class="badge badge-red">{{ patient.statut }}</span>
+      {% endif %}
+    </div>
+    <div class="meta">
+      <span><i class="fa fa-id-badge"></i> <span class="patient-id">{{ patient.id_patient }}</span></span>
+      <span><i class="fa fa-calendar"></i> Né(e) le {{ patient.date_naissance }}</span>
+      {% if patient.sexe == 'Masculin' %}
+        <span><i class="fa fa-mars" style="color:#6bbcff;"></i> Masculin</span>
+      {% else %}
+        <span><i class="fa fa-venus" style="color:#ff9fcf;"></i> Féminin</span>
+      {% endif %}
+      <span><i class="fa fa-tint" style="color:#ff6b6b;"></i> Groupe {{ patient.groupe_sanguin or 'NC' }}</span>
+      <span><i class="fa fa-phone"></i> {{ patient.telephone or 'NC' }}</span>
+    </div>
+  </div>
+  <div style="text-align:right;">
+    <div class="text-muted" style="font-size:0.72rem;">Date d'entrée</div>
+    <div class="mono" style="font-size:0.9rem;color:var(--teal);">{{ patient.date_entree }}</div>
+    {% if patient.date_sortie %}
+    <div class="text-muted" style="font-size:0.72rem;margin-top:8px;">Date de sortie</div>
+    <div class="mono" style="font-size:0.9rem;color:var(--accent3);">{{ patient.date_sortie }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- GRILLE D'INFOS -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+  <!-- COLONNE GAUCHE -->
+  <div>
+    <div class="card fade-up delay-2 mb-4">
+      <div class="section-title"><i class="fa fa-hospital"></i> Prise en charge</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Service</div>
+          <div class="info-value"><span class="badge badge-teal">{{ patient.service }}</span></div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Médecin traitant</div>
+          <div class="info-value">{{ patient.medecin or '—' }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Salle / Lit</div>
+          <div class="info-value mono">{{ patient.salle or '—' }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Urgence</div>
+          <div class="info-value">
+            {% if patient.urgence == 'Oui' %}
+              <span class="badge badge-red"><i class="fa fa-bolt"></i> OUI</span>
+            {% else %}
+              <span class="badge badge-muted">Non</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-up delay-2 mb-4">
+      <div class="section-title"><i class="fa fa-map-marker-alt"></i> Informations personnelles</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Adresse</div>
+          <div class="info-value">{{ patient.adresse or '—' }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Téléphone</div>
+          <div class="info-value">{{ patient.telephone or '—' }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if patient.allergies %}
+    <div class="card fade-up delay-3" style="border-color:rgba(255,107,107,0.3);">
+      <div class="section-title" style="color:var(--accent);"><i class="fa fa-exclamation-triangle"></i> Allergies</div>
+      <p style="font-size:0.9rem;line-height:1.6;">{{ patient.allergies }}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- COLONNE DROITE -->
+  <div>
+    <div class="card fade-up delay-2 mb-4">
+      <div class="section-title"><i class="fa fa-notes-medical"></i> Motif de consultation</div>
+      <p style="font-size:0.9rem;line-height:1.7;white-space:pre-wrap;">{{ patient.motif or '—' }}</p>
+    </div>
+
+    {% if patient.symptomes %}
+    <div class="card fade-up delay-2 mb-4">
+      <div class="section-title"><i class="fa fa-list-ul"></i> Symptômes</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        {% for s in patient.symptomes %}
+          <span class="badge badge-red">{{ s }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if patient.antecedents %}
+    <div class="card fade-up delay-3 mb-4">
+      <div class="section-title"><i class="fa fa-history"></i> Antécédents</div>
+      <p style="font-size:0.9rem;line-height:1.6;white-space:pre-wrap;">{{ patient.antecedents }}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- DIAGNOSTIC & TRAITEMENT -->
+{% if patient.diagnostic or patient.traitement or patient.notes %}
+<div class="card fade-up delay-3 mb-4">
+  <div class="section-title"><i class="fa fa-stethoscope"></i> Diagnostic & Traitement</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <div>
+      <div class="info-item" style="margin-bottom:16px;">
+        <div class="info-label">Diagnostic</div>
+        <div class="info-value" style="font-size:0.9rem;line-height:1.6;margin-top:6px;white-space:pre-wrap;">{{ patient.diagnostic or '—' }}</div>
+      </div>
+    </div>
+    <div>
+      <div class="info-item" style="margin-bottom:16px;">
+        <div class="info-label">Traitement prescrit</div>
+        <div class="info-value" style="font-size:0.9rem;line-height:1.6;margin-top:6px;white-space:pre-wrap;">{{ patient.traitement or '—' }}</div>
+      </div>
+    </div>
+    {% if patient.notes %}
+    <div style="grid-column:1/-1;">
+      <div class="info-label">Notes médicales</div>
+      <div style="font-size:0.9rem;line-height:1.6;margin-top:6px;white-space:pre-wrap;color:var(--muted);">{{ patient.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="card fade-up delay-3" style="border-style:dashed;opacity:0.6;text-align:center;padding:28px;">
+  <i class="fa fa-stethoscope" style="font-size:1.5rem;color:var(--muted);margin-bottom:10px;display:block;"></i>
+  <p class="text-muted">Aucun diagnostic enregistré pour ce patient.</p>
+  <a href="{{ url_for('modifier_patient', pid=patient.id_patient) }}" class="btn btn-outline btn-sm" style="margin-top:12px;">
+    <i class="fa fa-plus"></i> Ajouter le diagnostic
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}
