@@ -16,6 +16,10 @@ def save_patients(patients):
         json.dump(patients, f, ensure_ascii=False, indent=2)
 
 @app.route("/")
+def welcome():
+    return render_template("welcome.html")
+
+@app.route("/dashboard")
 def index():
     patients = load_patients()
     total = len(patients)

@@ -141,10 +141,13 @@ Chart.defaults.font.family="'Sora',sans-serif";
 (function(){
   const L=Object.keys(dataSexes),V=Object.values(dataSexes);
   if(!V.some(v=>v>0)) return;
+  // Couleur selon le label : Masculin=bleu, Féminin=rose
+  const bgColors = L.map(l => l==='Masculin' ? BLUE+'cc' : PINK+'cc');
+  const bdColors = L.map(l => l==='Masculin' ? BLUE : PINK);
   new Chart(document.getElementById('chartSexe'),{
     type:'doughnut',
     data:{labels:L,datasets:[{data:V,
-      backgroundColor:[BLUE+'cc',PINK+'cc'],borderColor:[BLUE,PINK],
+      backgroundColor:bgColors,borderColor:bdColors,
       borderWidth:2,hoverOffset:8}]},
     options:{responsive:true,maintainAspectRatio:false,
       animation:{animateRotate:true,duration:900},cutout:'62%',
